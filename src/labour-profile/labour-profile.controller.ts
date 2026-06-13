@@ -6,11 +6,14 @@ import {
   Param,
   Patch,
   Post,
+  Query,
   UseGuards,
 } from '@nestjs/common';
-import { ApiBearerAuth, ApiBody, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiBody, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from 'src/auth/guard';
+import { CreateLabourOnboardingDto } from './dto/create-labour-onboarding.dto';
 import { CreateLabourProfileDto } from './dto/create-labour-profile.dto';
+import { LabourProfilePaginationDto } from './dto/labour-profile-pagination.dto';
 import { UpdateLabourProfileDto } from './dto/update-labour-profile.dto';
 import { LabourProfileService } from './labour-profile.service';
 import { LabourProfileSwaggerSchema } from './labour-profile.swagger-schema';
@@ -27,16 +30,29 @@ export class LabourProfileController {
     return this.labourProfileService.create(createLabourProfileDto);
   }
 
-  @ApiBearerAuth()
-  @UseGuards(JwtAuthGuard)
+  @ApiBody(LabourProfileSwaggerSchema.createLabourOnboardingBody)
+  @ApiResponse(LabourProfileSwaggerSchema.createLabourOnboardingResponse)
+  @Post('new')
+  createNew(@Body() createLabourOnboardingDto: CreateLabourOnboardingDto) {
+    return this.labourProfileService.createNew(createLabourOnboardingDto);
+  }
+
+  @ApiQuery({ name: 'page', required: false, type: Number, example: 1 })
+  @ApiQuery({ name: 'limit', required: false, type: Number, example: 10 })
+  @ApiResponse(LabourProfileSwaggerSchema.labourOnboardingListResponse)
   @Get()
-  findAll() {
-    return this.labourProfileService.findAll();
+  findAll(@Query() pagination: LabourProfilePaginationDto) {
+    return this.labourProfileService.findAll(pagination);
   }
 
   @Get('trades')
   getTrades() {
     return this.labourProfileService.getTrades();
+  }
+
+  @Get('trades-with-roles')
+  getTradesWithRoles() {
+    return this.labourProfileService.getTradesWithRoles();
   }
 
   @Get('trades/:trade/roles')
@@ -51,8 +67,6 @@ export class LabourProfileController {
     return this.labourProfileService.findAvailable();
   }
 
-  @ApiBearerAuth()
-  @UseGuards(JwtAuthGuard)
   @Get('user/:userId')
   findByUser(@Param('userId') userId: string) {
     return this.labourProfileService.findByUserId(+userId);
@@ -76,7 +90,6 @@ export class LabourProfileController {
   }
 
   @ApiBearerAuth()
-  @UseGuards(JwtAuthGuard)
   @Delete(':id')
   remove(@Param('id') id: string) {
     return this.labourProfileService.remove(+id);
