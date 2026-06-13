@@ -1,5 +1,7 @@
 import { BaseEntity } from 'base.entity';
-import { Column, Entity } from 'typeorm';
+import { LabourProfile } from 'src/labour-profile/entities/labour-profile.entity';
+import { Organization } from 'src/organization/entities/organization.entity';
+import { Column, Entity, OneToOne } from 'typeorm';
 
 @Entity('User')
 export class User extends BaseEntity {
@@ -11,14 +13,26 @@ export class User extends BaseEntity {
   email: string;
   @Column()
   phone: string;
+  @Column({ default: false })
+  isPhoneVerified: boolean;
   @Column({ nullable: true })
   address: string;
-  @Column({nullable:true})
+  @Column({ nullable: true })
   role: Role;
+
+  @OneToOne(() => Organization, (organization) => organization.user, {
+    nullable: true,
+  })
+  organization?: Organization;
+
+  @OneToOne(() => LabourProfile, (labourProfile) => labourProfile.user, {
+    nullable: true,
+  })
+  labourProfile?: LabourProfile;
 }
 
 export enum Role {
-  TEACHER = 'teacher',
+  COMPANY = 'company',
   ADMIN = 'admin',
-  STUDENT = 'student',
+  LABOUR= 'labour',
 }

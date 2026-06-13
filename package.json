@@ -5,6 +5,11 @@
   "author": "",
   "private": true,
   "license": "UNLICENSED",
+  "packageManager": "pnpm@10.29.2",
+  "engines": {
+    "node": "20.x",
+    "pnpm": "10.x"
+  },
   "scripts": {
     "prebuild": "rimraf dist",
     "build": "nest build",
@@ -31,6 +36,7 @@
     "@nestjs/swagger": "^6.2.3",
     "@nestjs/typeorm": "^11.0.0",
     "class-validator": "^0.14.1",
+    "libphonenumber-js": "^1.13.6",
     "passport": "^0.7.0",
     "passport-jwt": "^4.0.1",
     "pg": "^8.14.1",
@@ -38,6 +44,7 @@
     "rimraf": "^3.0.2",
     "rxjs": "^7.2.0",
     "swagger-ui-express": "^5.0.1",
+    "twilio": "^6.0.2",
     "typeorm": "^0.3.22"
   },
   "devDependencies": {
