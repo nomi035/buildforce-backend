@@ -9,7 +9,6 @@ import { JwtAuthGuard } from 'src/auth/guard';
 
 @Controller('user')
 @ApiTags('user')
-@ApiBearerAuth()
 export class UserController {
   constructor(private readonly userService: UserService) {}
 
@@ -23,7 +22,6 @@ export class UserController {
     return this.userService.create(createUserDto);
   }
 
-  @UseGuards(JwtAuthGuard)
 
   @Get()
   findAll() {
