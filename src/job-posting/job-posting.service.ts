@@ -156,16 +156,28 @@ export class JobPostingService {
     }
 
     if (trade) {
-      const pattern = this.likePattern(trade);
-      qb.andWhere(
-        new Brackets((sub) => {
-          sub
-            .where('job.trade ILIKE :tradePattern', { tradePattern: pattern })
-            .orWhere('job.title ILIKE :tradePattern', { tradePattern: pattern })
-            .orWhere('job.roles ILIKE :tradePattern', { tradePattern: pattern })
-            .orWhere('job.description ILIKE :tradePattern', { tradePattern: pattern });
-        }),
-      );
+      const rawTrade = search?.trade?.trim();
+      if (
+        rawTrade &&
+        Object.values(LabourTrade).includes(rawTrade as LabourTrade)
+      ) {
+        qb.andWhere('job.trade = :tradeExact', { tradeExact: rawTrade });
+      } else {
+        const pattern = this.likePattern(trade);
+        qb.andWhere(
+          new Brackets((sub) => {
+            sub
+              .where('CAST(job.trade AS text) ILIKE :tradePattern', {
+                tradePattern: pattern,
+              })
+              .orWhere('job.title ILIKE :tradePattern', { tradePattern: pattern })
+              .orWhere('job.roles ILIKE :tradePattern', { tradePattern: pattern })
+              .orWhere('job.description ILIKE :tradePattern', {
+                tradePattern: pattern,
+              });
+          }),
+        );
+      }
     }
 
     const companyId = Number(search?.companyId);
