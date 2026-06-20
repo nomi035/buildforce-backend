@@ -5,12 +5,16 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { UserModule } from './user/user.module';
 import { AuthModule } from './auth/auth.module';
+import { CompanyRegistrationModule } from './company-registration/company-registration.module';
 import { OrganizationModule } from './organization/organization.module';
 import { LabourProfileModule } from './labour-profile/labour-profile.module';
+import { JobPostingModule } from './job-posting/job-posting.module';
+import { JobApplicationModule } from './job-application/job-application.module';
 import { PhoneVerificationModule } from './phone-verification/phone-verification.module';
 
 @Module({
-  imports: [UserModule,
+  imports: [
+    CompanyRegistrationModule,
     ConfigModule.forRoot(),
      TypeOrmModule.forRoot({
     type: 'postgres',
@@ -26,9 +30,12 @@ import { PhoneVerificationModule } from './phone-verification/phone-verification
     //  rejectUnauthorized: false,
     //  },
   }),
+     UserModule,
      AuthModule,
      OrganizationModule,
      LabourProfileModule,
+     JobPostingModule,
+     JobApplicationModule,
      PhoneVerificationModule,
 ],
   controllers: [AppController],
