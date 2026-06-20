@@ -25,7 +25,7 @@ import { PhoneVerificationModule } from './phone-verification/phone-verification
     // password: process.env.DB_PASSWORD,
     url: process.env.DB_URL,
     autoLoadEntities: true,
-    synchronize: true,
+    //synchronize: true,
     //  ssl: {
     //  rejectUnauthorized: false,
     //  },
