@@ -120,7 +120,9 @@ export class JobPostingService {
           sub
             .where('job.title ILIKE :queryPattern', { queryPattern: pattern })
             .orWhere('job.description ILIKE :queryPattern', { queryPattern: pattern })
-            .orWhere('job.trade ILIKE :queryPattern', { queryPattern: pattern })
+            .orWhere('CAST(job.trade AS text) ILIKE :queryPattern', {
+              queryPattern: pattern,
+            })
             .orWhere('job.roles ILIKE :queryPattern', { queryPattern: pattern })
             .orWhere('job.location ILIKE :queryPattern', { queryPattern: pattern })
             .orWhere('job.county ILIKE :queryPattern', { queryPattern: pattern })
