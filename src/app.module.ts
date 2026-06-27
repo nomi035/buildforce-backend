@@ -11,6 +11,7 @@ import { LabourProfileModule } from './labour-profile/labour-profile.module';
 import { JobPostingModule } from './job-posting/job-posting.module';
 import { JobApplicationModule } from './job-application/job-application.module';
 import { PhoneVerificationModule } from './phone-verification/phone-verification.module';
+import { ReferralModule } from './referral/referral.module';
 
 @Module({
   imports: [
@@ -25,7 +26,7 @@ import { PhoneVerificationModule } from './phone-verification/phone-verification
     // password: process.env.DB_PASSWORD,
     url: process.env.DB_URL,
     autoLoadEntities: true,
-    //synchronize: true,
+    synchronize: true,
     //  ssl: {
     //  rejectUnauthorized: false,
     //  },
@@ -37,6 +38,7 @@ import { PhoneVerificationModule } from './phone-verification/phone-verification
      JobPostingModule,
      JobApplicationModule,
      PhoneVerificationModule,
+     ReferralModule,
 ],
   controllers: [AppController],
   providers: [AppService],

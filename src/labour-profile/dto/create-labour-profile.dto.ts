@@ -17,4 +17,5 @@ export class CreateLabourProfileDto {
   dateOfBirth?: Date;
   location?: string;
   emergencyContact?: string;
+  promoCode?: string;
 }

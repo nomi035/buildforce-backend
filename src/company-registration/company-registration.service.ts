@@ -6,6 +6,7 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { normalizeUsPhone } from 'src/phone-verification/utils/phone.util';
+import { ReferralService } from 'src/referral/referral.service';
 import { Organization } from 'src/organization/entities/organization.entity';
 import { Role, User } from 'src/user/entities/user.entity';
 import { DataSource, Repository } from 'typeorm';
@@ -20,6 +21,7 @@ export class CompanyRegistrationService {
     @InjectRepository(Organization)
     private readonly organizationRepository: Repository<Organization>,
     private readonly dataSource: DataSource,
+    private readonly referralService: ReferralService,
   ) {}
 
   private validateWorkforceRequirement(workforceRequirement: WorkforceRequirement) {
@@ -107,6 +109,12 @@ export class CompanyRegistrationService {
         user: savedUser,
       });
       const savedOrganization = await manager.save(Organization, organization);
+
+      await this.referralService.applyReferralInTransaction(
+        manager,
+        dto.promoCode,
+        savedUser.id,
+      );
 
       return this.toCompanyResponse(savedOrganization);
     });

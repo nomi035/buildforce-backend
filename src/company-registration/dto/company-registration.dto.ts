@@ -12,4 +12,5 @@ export class CompanyRegistrationDto {
   location: string;
   county: string;
   workforceRequirement: WorkforceRequirement;
+  promoCode?: string;
 }
