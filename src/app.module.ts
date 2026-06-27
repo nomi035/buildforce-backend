@@ -12,6 +12,7 @@ import { JobPostingModule } from './job-posting/job-posting.module';
 import { JobApplicationModule } from './job-application/job-application.module';
 import { PhoneVerificationModule } from './phone-verification/phone-verification.module';
 import { ReferralModule } from './referral/referral.module';
+import { TrainingModule } from './training/training.module';
 
 @Module({
   imports: [
@@ -39,6 +40,7 @@ import { ReferralModule } from './referral/referral.module';
      JobApplicationModule,
      PhoneVerificationModule,
      ReferralModule,
+     TrainingModule,
 ],
   controllers: [AppController],
   providers: [AppService],
