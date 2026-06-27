@@ -1,3 +1,4 @@
+import { ReferralSwaggerSchema } from 'src/referral/referral.swagger-schema';
 import { WorkforceRequirement } from './enums/workforce-requirement.enum';
 
 export const CompanyRegistrationSwaggerSchema = {
@@ -21,6 +22,7 @@ export const CompanyRegistrationSwaggerSchema = {
           enum: Object.values(WorkforceRequirement),
           example: '1-10',
         },
+        promoCode: ReferralSwaggerSchema.promoCodeSignupField,
       },
       required: [
         'companyName',

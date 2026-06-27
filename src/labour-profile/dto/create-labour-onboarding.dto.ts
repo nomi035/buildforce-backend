@@ -13,4 +13,5 @@ export class CreateLabourOnboardingDto {
   tradeSelections: TradeSelectionDto[];
   skillLevel: SkillLevel;
   experience: ExperienceRange;
+  promoCode?: string;
 }

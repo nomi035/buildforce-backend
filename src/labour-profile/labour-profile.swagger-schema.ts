@@ -1,3 +1,4 @@
+import { ReferralSwaggerSchema } from 'src/referral/referral.swagger-schema';
 import { ExperienceRange } from './enums/experience-range.enum';
 import { LabourTrade } from './enums/labour-trade.enum';
 import { Language } from './enums/language.enum';
@@ -48,6 +49,7 @@ export const LabourProfileSwaggerSchema = {
         dateOfBirth: { type: 'string', format: 'date' },
         location: { type: 'string' },
         emergencyContact: { type: 'string' },
+        promoCode: ReferralSwaggerSchema.promoCodeSignupField,
       },
       required: ['phoneVerificationToken', 'user'],
     },
@@ -132,6 +134,7 @@ export const LabourProfileSwaggerSchema = {
           enum: Object.values(ExperienceRange),
           example: '1-3',
         },
+        promoCode: ReferralSwaggerSchema.promoCodeSignupField,
       },
       required: [
         'user',

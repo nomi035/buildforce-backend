@@ -7,6 +7,7 @@ export function setupSwagger(app: INestApplication) {
     .setDescription('API for BuildForce backend')
     .setVersion('1.0')
     .addTag('BuildForce')
+    .addTag('referral', 'Referral promo codes — generate, validate, and track signups')
     .addBearerAuth()
     .build();
   const documentFactory = SwaggerModule.createDocument(app, config);

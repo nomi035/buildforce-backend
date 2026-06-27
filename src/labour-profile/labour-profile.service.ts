@@ -7,6 +7,7 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, Repository } from 'typeorm';
 import { PhoneVerificationService } from 'src/phone-verification/phone-verification.service';
+import { ReferralService } from 'src/referral/referral.service';
 import { normalizeUsPhone } from 'src/phone-verification/utils/phone.util';
 import { Role, User } from 'src/user/entities/user.entity';
 import { CreateLabourOnboardingDto } from './dto/create-labour-onboarding.dto';
@@ -34,6 +35,7 @@ export class LabourProfileService {
     private readonly labourProfileRepository: Repository<LabourProfile>,
     private readonly dataSource: DataSource,
     private readonly phoneVerificationService: PhoneVerificationService,
+    private readonly referralService: ReferralService,
   ) {}
 
   private validateRoleForTrade(trade?: LabourTrade, role?: LabourRole) {
@@ -273,6 +275,12 @@ export class LabourProfileService {
       });
       const savedProfile = await manager.save(LabourProfile, labourProfile);
 
+      await this.referralService.applyReferralInTransaction(
+        manager,
+        createLabourOnboardingDto.promoCode,
+        savedUser.id,
+      );
+
       return this.toLabourOnboardingResponse(savedUser, savedProfile);
     });
   }
@@ -313,6 +321,12 @@ export class LabourProfileService {
         user: savedUser,
       });
       const savedProfile = await manager.save(LabourProfile, labourProfile);
+
+      await this.referralService.applyReferralInTransaction(
+        manager,
+        createLabourProfileDto.promoCode,
+        savedUser.id,
+      );
 
       return {
         user: savedUser,
