@@ -4,7 +4,6 @@
 /.pnpm-store
 
 # dotenv environment variable files
-.env
 .env.development.local
 .env.test.local
 
