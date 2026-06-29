@@ -1,12 +1,14 @@
 import {
   BadRequestException,
   ConflictException,
+  ForbiddenException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { User } from 'src/user/entities/user.entity';
+import { Role, User } from 'src/user/entities/user.entity';
 import { EntityManager, Repository } from 'typeorm';
+import { ReferralAdminDashboardDto } from './dto/referral-admin-dashboard.dto';
 import { ReferralPaginationDto } from './dto/referral-pagination.dto';
 import { Referral } from './entities/referral.entity';
 import {
@@ -23,11 +25,33 @@ export class ReferralService {
     private readonly referralRepository: Repository<Referral>,
   ) {}
 
+  private assertAdmin(role?: string) {
+    if (role !== Role.ADMIN) {
+      throw new ForbiddenException('Only admin accounts can access referral admin data');
+    }
+  }
+
   private resolvePagination(pagination?: ReferralPaginationDto) {
     const page = Math.max(Number(pagination?.page) || 1, 1);
     const limit = Math.min(Math.max(Number(pagination?.limit) || 10, 1), 100);
     const skip = (page - 1) * limit;
     return { page, limit, skip };
+  }
+
+  private buildPaginationMeta(
+    total: number,
+    page: number,
+    limit: number,
+  ) {
+    const totalPages = total === 0 ? 0 : Math.ceil(total / limit);
+    return {
+      total,
+      page,
+      limit,
+      totalPages,
+      hasNextPage: page < totalPages,
+      hasPreviousPage: page > 1 && totalPages > 0,
+    };
   }
 
   private mapReferralRecord(referral: Referral) {
@@ -220,6 +244,132 @@ export class ReferralService {
         hasNextPage: page < totalPages,
         hasPreviousPage: page > 1,
       },
+    };
+  }
+
+  async getAdminDashboard(
+    adminRole: string,
+    query?: ReferralAdminDashboardDto,
+  ) {
+    this.assertAdmin(adminRole);
+
+    const { page, limit, skip } = this.resolvePagination(query);
+    const roleFilter = query?.role ?? Role.LABOUR;
+
+    const totalReferrals = await this.referralRepository.count();
+
+    const summaryQb = this.referralRepository
+      .createQueryBuilder('referral')
+      .innerJoin('referral.referrer', 'referrer')
+      .select('COUNT(DISTINCT referrer.id)', 'totalReferrers')
+      .addSelect(
+        `COUNT(DISTINCT referrer.id) FILTER (WHERE referrer.role = :labourRole)`,
+        'labourReferrers',
+      )
+      .setParameter('labourRole', Role.LABOUR);
+
+    const summaryRaw = await summaryQb.getRawOne<{
+      totalReferrers: string;
+      labourReferrers: string;
+    }>();
+
+    const rankedQb = this.referralRepository
+      .createQueryBuilder('referral')
+      .innerJoin('referral.referrer', 'referrer')
+      .select('referrer.id', 'userId')
+      .addSelect('referrer.name', 'name')
+      .addSelect('referrer.email', 'email')
+      .addSelect('referrer.phone', 'phone')
+      .addSelect('referrer.role', 'role')
+      .addSelect('referrer.promoCode', 'promoCode')
+      .addSelect('COUNT(referral.id)', 'totalReferrals')
+      .addSelect('MAX(referral.createdAt)', 'lastReferralAt')
+      .groupBy('referrer.id')
+      .addGroupBy('referrer.name')
+      .addGroupBy('referrer.email')
+      .addGroupBy('referrer.phone')
+      .addGroupBy('referrer.role')
+      .addGroupBy('referrer.promoCode')
+      .orderBy('COUNT(referral.id)', 'DESC')
+      .addOrderBy('MAX(referral.createdAt)', 'DESC');
+
+    if (roleFilter) {
+      rankedQb.andWhere('referrer.role = :roleFilter', { roleFilter });
+    }
+
+    const allRanked = await rankedQb.getRawMany<{
+      userId: string;
+      name: string;
+      email: string;
+      phone: string;
+      role: string;
+      promoCode: string | null;
+      totalReferrals: string;
+      lastReferralAt: string;
+    }>();
+
+    const total = allRanked.length;
+    const pageRows = allRanked.slice(skip, skip + limit);
+
+    return {
+      success: true,
+      summary: {
+        totalReferrals,
+        totalReferrers: Number(summaryRaw?.totalReferrers ?? 0),
+        labourReferrers: Number(summaryRaw?.labourReferrers ?? 0),
+      },
+      data: pageRows.map((row, index) => ({
+        rank: skip + index + 1,
+        userId: Number(row.userId),
+        name: row.name,
+        email: row.email,
+        phone: row.phone,
+        role: row.role,
+        promoCode: row.promoCode,
+        totalReferrals: Number(row.totalReferrals),
+        lastReferralAt: row.lastReferralAt,
+      })),
+      meta: this.buildPaginationMeta(total, page, limit),
+    };
+  }
+
+  async getAdminReferrerDetail(
+    adminRole: string,
+    referrerUserId: number,
+    pagination?: ReferralPaginationDto,
+  ) {
+    this.assertAdmin(adminRole);
+
+    const referrer = await this.userRepository.findOne({
+      where: { id: referrerUserId },
+    });
+    if (!referrer) {
+      throw new NotFoundException('Referrer not found');
+    }
+
+    const { page, limit, skip } = this.resolvePagination(pagination);
+
+    const [referrals, total] = await this.referralRepository.findAndCount({
+      where: { referrer: { id: referrerUserId } },
+      relations: ['referredUser'],
+      order: { createdAt: 'DESC' },
+      skip,
+      take: limit,
+    });
+
+    return {
+      success: true,
+      referrer: {
+        userId: referrer.id,
+        name: referrer.name,
+        email: referrer.email,
+        phone: referrer.phone,
+        role: referrer.role,
+        promoCode: referrer.promoCode ?? null,
+        totalReferrals: total,
+      },
+      data: referrals.map((referral) => this.mapReferralRecord(referral)),
+      meta: this.buildPaginationMeta(total, page, limit),
     };
   }
 }
