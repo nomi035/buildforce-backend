@@ -155,4 +155,106 @@ export const ReferralSwaggerSchema = {
       'Optional referral promo code from another user. Validate first via GET /referral/validate/:code. ' +
       'When provided, the referrer receives credit and their referral count increases.',
   },
+  adminDashboardResponse: {
+    status: 200,
+    description:
+      'Admin referral dashboard — summary stats and ranked list of referrers',
+    schema: {
+      type: 'object',
+      properties: {
+        success: { type: 'boolean', example: true },
+        summary: {
+          type: 'object',
+          properties: {
+            totalReferrals: {
+              type: 'number',
+              example: 150,
+              description: 'All signups via any promo code',
+            },
+            totalReferrers: {
+              type: 'number',
+              example: 25,
+              description: 'Users who referred at least one signup',
+            },
+            labourReferrers: {
+              type: 'number',
+              example: 20,
+              description: 'Labour users who referred at least one signup',
+            },
+          },
+        },
+        data: {
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: {
+              rank: { type: 'number', example: 1 },
+              userId: { type: 'number', example: 5 },
+              name: { type: 'string', example: 'John Smith' },
+              email: { type: 'string', example: 'john@example.com' },
+              phone: { type: 'string', example: '+12125551234' },
+              role: { type: 'string', example: 'labour' },
+              promoCode: { type: 'string', example: 'BF-A1B2C3D4' },
+              totalReferrals: { type: 'number', example: 12 },
+              lastReferralAt: { type: 'string', format: 'date-time' },
+            },
+          },
+        },
+        meta: {
+          type: 'object',
+          properties: {
+            total: { type: 'number', example: 20 },
+            page: { type: 'number', example: 1 },
+            limit: { type: 'number', example: 20 },
+            totalPages: { type: 'number', example: 1 },
+            hasNextPage: { type: 'boolean', example: false },
+            hasPreviousPage: { type: 'boolean', example: false },
+          },
+        },
+      },
+    },
+  },
+  adminReferrerDetailResponse: {
+    status: 200,
+    description: 'Admin view of one referrer and everyone they referred',
+    schema: {
+      type: 'object',
+      properties: {
+        success: { type: 'boolean', example: true },
+        referrer: {
+          type: 'object',
+          properties: {
+            userId: { type: 'number', example: 5 },
+            name: { type: 'string', example: 'John Smith' },
+            email: { type: 'string', example: 'john@example.com' },
+            phone: { type: 'string', example: '+12125551234' },
+            role: { type: 'string', example: 'labour' },
+            promoCode: { type: 'string', example: 'BF-A1B2C3D4' },
+            totalReferrals: { type: 'number', example: 12 },
+          },
+        },
+        data: {
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: {
+              referralId: { type: 'number', example: 42 },
+              promoCodeUsed: { type: 'string', example: 'BF-A1B2C3D4' },
+              signedUpAt: { type: 'string', format: 'date-time' },
+              referredUser: {
+                type: 'object',
+                properties: {
+                  id: { type: 'number', example: 99 },
+                  name: { type: 'string', example: 'Jane Doe' },
+                  email: { type: 'string', example: 'jane@example.com' },
+                  role: { type: 'string', example: 'labour' },
+                },
+              },
+            },
+          },
+        },
+        meta: { type: 'object' },
+      },
+    },
+  },
 };
