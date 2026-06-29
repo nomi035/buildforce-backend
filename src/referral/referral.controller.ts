@@ -2,6 +2,7 @@ import {
   Controller,
   Get,
   Param,
+  ParseIntPipe,
   Post,
   Query,
   Req,
@@ -16,6 +17,7 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import { JwtAuthGuard } from 'src/auth/guard';
+import { ReferralAdminDashboardDto } from './dto/referral-admin-dashboard.dto';
 import { ReferralPaginationDto } from './dto/referral-pagination.dto';
 import { ReferralService } from './referral.service';
 import { ReferralSwaggerSchema } from './referral.swagger-schema';
@@ -71,6 +73,54 @@ export class ReferralController {
     @Query() pagination: ReferralPaginationDto,
   ) {
     return this.referralService.getMyReferrals(req.user.userId, pagination);
+  }
+
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard)
+  @Get('admin/dashboard')
+  @ApiOperation({
+    summary: 'Admin — referral leaderboard',
+    description:
+      'Paginated list of referrers ranked by total signups. Defaults to labour users. ' +
+      'Includes platform-wide summary counts for the admin dashboard.',
+  })
+  @ApiQuery({ name: 'page', required: false, type: Number, example: 1 })
+  @ApiQuery({ name: 'limit', required: false, type: Number, example: 20 })
+  @ApiQuery({
+    name: 'role',
+    required: false,
+    enum: ['labour', 'company', 'admin'],
+    description: 'Filter referrers by role. Defaults to labour.',
+  })
+  @ApiResponse(ReferralSwaggerSchema.adminDashboardResponse)
+  getAdminDashboard(
+    @Req() req: { user: { userId: number; role: string } },
+    @Query() query: ReferralAdminDashboardDto,
+  ) {
+    return this.referralService.getAdminDashboard(req.user.role, query);
+  }
+
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard)
+  @Get('admin/referrers/:userId')
+  @ApiOperation({
+    summary: 'Admin — referrer detail',
+    description:
+      'Full profile of one referrer plus paginated list of every user they referred.',
+  })
+  @ApiQuery({ name: 'page', required: false, type: Number, example: 1 })
+  @ApiQuery({ name: 'limit', required: false, type: Number, example: 10 })
+  @ApiResponse(ReferralSwaggerSchema.adminReferrerDetailResponse)
+  getAdminReferrerDetail(
+    @Req() req: { user: { userId: number; role: string } },
+    @Param('userId', ParseIntPipe) userId: number,
+    @Query() pagination: ReferralPaginationDto,
+  ) {
+    return this.referralService.getAdminReferrerDetail(
+      req.user.role,
+      userId,
+      pagination,
+    );
   }
 
   @Get('validate/:code')
