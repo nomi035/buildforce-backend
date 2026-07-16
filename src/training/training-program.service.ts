@@ -7,6 +7,7 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Role } from 'src/user/entities/user.entity';
+import { S3Service } from 'src/s3/s3.service';
 import { Repository } from 'typeorm';
 import { CreateTrainingProgramDto } from './dto/create-training-program.dto';
 import { EnrollTrainingProgramDto } from './dto/enroll-training-program.dto';
@@ -16,6 +17,10 @@ import { TrainingEnrollment } from './entities/training-enrollment.entity';
 import { TrainingProgram } from './entities/training-program.entity';
 import { TrainingLevel } from './enums/training-level.enum';
 import { TrainingProgramType } from './enums/training-program-type.enum';
+import {
+  COURSE_IMAGE_MIME_TYPES,
+  COURSE_OUTLINE_MIME_TYPES,
+} from './multer.config';
 
 @Injectable()
 export class TrainingProgramService {
@@ -24,6 +29,7 @@ export class TrainingProgramService {
     private readonly programRepository: Repository<TrainingProgram>,
     @InjectRepository(TrainingEnrollment)
     private readonly enrollmentRepository: Repository<TrainingEnrollment>,
+    private readonly s3Service: S3Service,
   ) {}
 
   private assertAdmin(role?: string) {
@@ -106,6 +112,38 @@ export class TrainingProgramService {
     }
   }
 
+  parseCreateFormBody(body: Record<string, string>): CreateTrainingProgramDto {
+    return {
+      type: body.type as TrainingProgramType,
+      title: body.title,
+      description: body.description,
+      durationHours: body.durationHours
+        ? Number(body.durationHours)
+        : undefined,
+      level: body.level as TrainingLevel,
+      eventDate: body.eventDate,
+      location: body.location,
+      price: Number(body.price),
+      totalSpots: body.totalSpots ? Number(body.totalSpots) : undefined,
+    };
+  }
+
+  private assertCourseOutlineFile(file: Express.Multer.File) {
+    if (!COURSE_OUTLINE_MIME_TYPES.includes(file.mimetype)) {
+      throw new BadRequestException(
+        'courseOutline must be a PDF or Word document',
+      );
+    }
+  }
+
+  private assertCourseImageFile(file: Express.Multer.File) {
+    if (!COURSE_IMAGE_MIME_TYPES.includes(file.mimetype)) {
+      throw new BadRequestException(
+        'courseImage must be a JPEG, PNG, or WebP image',
+      );
+    }
+  }
+
   private async getEnrollmentCount(programId: number) {
     return this.enrollmentRepository.count({
       where: { program: { id: programId }, isActive: true },
@@ -129,6 +167,8 @@ export class TrainingProgramService {
       eventDate: this.formatDate(program.eventDate),
       location: program.location,
       price: Number(program.price),
+      courseOutline: program.courseOutline,
+      courseImage: program.courseImage,
       totalSpots: program.totalSpots,
       enrolledCount,
       spotsLeft,
@@ -138,9 +178,29 @@ export class TrainingProgramService {
     };
   }
 
-  async create(role: string, dto: CreateTrainingProgramDto) {
+  async create(
+    role: string,
+    dto: CreateTrainingProgramDto,
+    courseOutline: Express.Multer.File,
+    courseImage: Express.Multer.File,
+  ) {
     this.assertAdmin(role);
     this.validateCreatePayload(dto);
+
+    if (!courseOutline) {
+      throw new BadRequestException('courseOutline file is required');
+    }
+    if (!courseImage) {
+      throw new BadRequestException('courseImage file is required');
+    }
+
+    this.assertCourseOutlineFile(courseOutline);
+    this.assertCourseImageFile(courseImage);
+
+    const [courseOutlineUrl, courseImageUrl] = await Promise.all([
+      this.s3Service.uploadFile(courseOutline, 'training-programs/outlines'),
+      this.s3Service.uploadFile(courseImage, 'training-programs/images'),
+    ]);
 
     const program = this.programRepository.create({
       type: dto.type,
@@ -152,6 +212,8 @@ export class TrainingProgramService {
       location: dto.location?.trim() ?? null,
       price: dto.price,
       totalSpots: dto.totalSpots ?? null,
+      courseOutline: courseOutlineUrl,
+      courseImage: courseImageUrl,
     });
 
     const saved = await this.programRepository.save(program);

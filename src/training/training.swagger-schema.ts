@@ -3,7 +3,8 @@ import { TrainingProgramType } from './enums/training-program-type.enum';
 
 export const TrainingSwaggerSchema = {
   createProgramBody: {
-    description: 'Admin — create a course or workshop for the landing page',
+    description:
+      'Admin — create a course or workshop (multipart). Upload courseOutline (PDF/Word) and courseImage (JPEG/PNG/WebP). All other fields are sent as form fields.',
     schema: {
       type: 'object',
       properties: {
@@ -20,8 +21,18 @@ export const TrainingSwaggerSchema = {
         },
         price: { type: 'number', example: 50 },
         totalSpots: { type: 'number', example: 20 },
+        courseOutline: {
+          type: 'string',
+          format: 'binary',
+          description: 'Course outline document (PDF or Word, max 10MB)',
+        },
+        courseImage: {
+          type: 'string',
+          format: 'binary',
+          description: 'Course cover image (JPEG, PNG, WebP, max 10MB)',
+        },
       },
-      required: ['type', 'title', 'price'],
+      required: ['type', 'title', 'price', 'courseOutline', 'courseImage'],
     },
   },
   updateProgramBody: {
@@ -56,6 +67,16 @@ export const TrainingSwaggerSchema = {
         eventDate: { type: 'string', example: '2024-06-15' },
         location: { type: 'string', example: 'Dallas, TX' },
         price: { type: 'number', example: 50 },
+        courseOutline: {
+          type: 'string',
+          example: 'https://bucket.s3.region.amazonaws.com/training-programs/outlines/uuid-outline.pdf',
+          description: 'S3 URL of the uploaded course outline',
+        },
+        courseImage: {
+          type: 'string',
+          example: 'https://bucket.s3.region.amazonaws.com/training-programs/images/uuid-cover.jpg',
+          description: 'S3 URL of the uploaded course cover image',
+        },
         enrolledCount: { type: 'number', example: 4820 },
         spotsLeft: { type: 'number', example: 8, nullable: true },
       },

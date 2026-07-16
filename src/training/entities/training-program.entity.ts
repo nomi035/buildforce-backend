@@ -34,6 +34,12 @@ export class TrainingProgram extends BaseEntity {
   @Column({ type: 'decimal', precision: 10, scale: 2 })
   price: number;
 
+  @Column({ nullable: true })
+  courseOutline: string;
+
+  @Column({ nullable: true })
+  courseImage: string;
+
   /** Workshop: max participants */
   @Column({ type: 'int', nullable: true })
   totalSpots: number;
