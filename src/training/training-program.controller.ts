@@ -9,17 +9,20 @@ import {
   Post,
   Query,
   Req,
+  UploadedFiles,
   UseGuards,
+  UseInterceptors,
 } from '@nestjs/common';
 import {
   ApiBearerAuth,
   ApiBody,
+  ApiConsumes,
   ApiQuery,
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
+import { FileFieldsInterceptor } from '@nestjs/platform-express';
 import { JwtAuthGuard } from 'src/auth/guard';
-import { CreateTrainingProgramDto } from './dto/create-training-program.dto';
 import { EnrollTrainingProgramDto } from './dto/enroll-training-program.dto';
 import { TrainingPaginationDto } from './dto/training-pagination.dto';
 import { UpdateTrainingProgramDto } from './dto/update-training-program.dto';
@@ -27,6 +30,7 @@ import { TrainingProgramType } from './enums/training-program-type.enum';
 import { OptionalJwtAuthGuard } from './guards/optional-jwt-auth.guard';
 import { TrainingProgramService } from './training-program.service';
 import { TrainingSwaggerSchema } from './training.swagger-schema';
+import { trainingProgramUploadOptions } from './multer.config';
 
 @Controller('training-program')
 @ApiTags('training-program')
@@ -35,14 +39,35 @@ export class TrainingProgramController {
 
   @ApiBearerAuth()
   @UseGuards(JwtAuthGuard)
+  @ApiConsumes('multipart/form-data')
   @ApiBody(TrainingSwaggerSchema.createProgramBody)
   @ApiResponse(TrainingSwaggerSchema.programResponse)
+  @UseInterceptors(
+    FileFieldsInterceptor(
+      [
+        { name: 'courseOutline', maxCount: 1 },
+        { name: 'courseImage', maxCount: 1 },
+      ],
+      trainingProgramUploadOptions,
+    ),
+  )
   @Post()
   create(
     @Req() req: { user: { userId: number; role: string } },
-    @Body() dto: CreateTrainingProgramDto,
+    @Body() body: Record<string, string>,
+    @UploadedFiles()
+    files: {
+      courseOutline?: Express.Multer.File[];
+      courseImage?: Express.Multer.File[];
+    },
   ) {
-    return this.trainingProgramService.create(req.user.role, dto);
+    const dto = this.trainingProgramService.parseCreateFormBody(body);
+    return this.trainingProgramService.create(
+      req.user.role,
+      dto,
+      files.courseOutline?.[0],
+      files.courseImage?.[0],
+    );
   }
 
   @ApiQuery({ name: 'page', required: false, type: Number, example: 1 })

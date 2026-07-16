@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { S3Module } from 'src/s3/s3.module';
 import { User } from 'src/user/entities/user.entity';
 import { TrainingEnrollment } from './entities/training-enrollment.entity';
 import { TrainingProgram } from './entities/training-program.entity';
@@ -17,6 +18,7 @@ import { TrainingProgramService } from './training-program.service';
       UserCertificate,
       User,
     ]),
+    S3Module,
   ],
   controllers: [TrainingProgramController, TrainingCertificateController],
   providers: [TrainingProgramService, TrainingCertificateService],
